@@ -789,7 +789,7 @@ function (slotProps) {
 - 定义：Vue.component()，components选项，sfc
 - 分类：有状态组件，functional(函数式组件)，abstract(抽象组件)
 - 通信：props，$emit()/$on()，provide/inject，$children/$parent/$root/$attrs/$listeners
-- 内容分发：<slot>，<template>，v-slot
+- 内容分发：`<slot>`，`<template>`，v-slot
 - 使用及优化：is，keep-alive，异步组件
 
 **组件的本质**
