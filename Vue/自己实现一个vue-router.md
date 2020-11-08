@@ -41,7 +41,7 @@ Vue Router 是 Vue.js 官方的路由管理器。它和 Vue.js 的核心深度�
   <router-link to="/about">About</router-link>
   ```
 
-### vue-router源码实现
+### vue-router实现
 
 #### 需求分析
 
@@ -84,7 +84,7 @@ VueRouter.install = function(_Vue) {
     // 主要原因是use在前（即执行了install方法），VueRouter实例创建在后，而install逻辑又需要用到该实例
     // 如果我们use完，创建VueRouter实例后，自己再手动挂载到$router也行，vue-router不这样设计可能觉得不够优雅
     beforeCreate() {
-      // 全局mixin是会所有组件都会有的，但只有根组件拥有router选项 TODO：如果其他组件也有router呢
+      // 全局mixin是会所有组件都会有的，但只有根组件拥有router选项，如果其他组件也有router，$router就会被覆盖掉
       // $options可以获取当前Vue实例/组件的初始化选项
       if (this.$options.router) {
         // vm.$router
@@ -223,3 +223,112 @@ export default {
   }
 }
 ```
+
+#### 嵌套路由
+
+目前如果`<router-view>`里再嵌套一个`<router-view>`，会导致不断嵌套渲染`<router-view>`，因为里层的`<router-view>`是当做外层`<router-view>`的插槽渲染出来的，然后里层又再重复渲染`<router-view>`，最终栈溢出
+
+解决：
+
+- 标记router-view深度
+
+- 按层级顺序存好一个带有需要渲染component信息的数组，路由匹配时根据深度获取component
+
+  > 这里只是存一个路由的信息，每次切换路由都要重新计算保存
+
+```js
+// router-view.js
+export default {
+  render(h) {
+    // 标记当前router-view深度
+    // 源码是把router-view声明成函数式组件的，他们routerView不是存到$vnode上
+    this.$vnode.data.routerView = true
+      
+    let depth = 0
+    let parent = this.$parent
+    while (parent) {
+      const vnodeData = parent.$vnode && parent.$vnode.data
+      if (vnodeData) {
+        if (vnodeData.routerView) {
+          // 说明当前parent是一个router-view
+          depth++
+        }
+      }
+        
+      parent = parent.$parent
+    }
+      
+    const component = null
+    const route = this.$router.matched[depth]
+    if (route) component = route.component
+    return h(component)
+  }
+}
+```
+
+```js
+// vue-router
+class VueRouter {
+  constructor(options) {
+    this.$options = options
+    
+    /**
+     * 不需要响应式current了
+     * Vue.util.defineReactive(this, 'current', '/')
+     * // 定义响应式的属性current
+     * const initial = window.location.hash.slice(1) || '/'
+     * Vue.util.defineReactive(this, 'current', initial)
+     */
+    this.current = window.location.hash.slice(1) || '/'
+    Vue.util.defineReactive(this, 'matched', [])
+    // match方法可以递归遍历路由表，获得匹配关系数组
+    this.match()
+      
+    window.addEventListener('hashchange', this.onHashChange.bind(this))
+    window.addEventListener('load', this.onHashChange.bind(this))
+      
+    /**
+     * 源码上是有map的，这里不实现了
+     * // 缓存path和route映射关系
+     * this.routeMap = {}
+     * this.$options.routes.forEach(route => {
+     *   this.routeMap[route.path] = route
+     * });
+     */
+  }
+    
+  onHashChange() {
+    this.current = window.location.hash.slice(1)
+    
+    // url有变化就再计算matched
+    this.matched = []
+    this.match()
+  }
+    
+  match(routes) {
+    routes = routes || this.$options.routes
+    
+    // 递归遍历routes
+    // 最后得出的matched数组得到一个路由下各个层级的信息
+    for (const route of routes) {
+      // 这里只是做一个简单情况的判断，实际源码很复杂
+      if (route.path === '/' && this.current === '/') {
+        // 如果是根路由，直接返回就行，这里一般不会有children，不然其他路由就失效了
+        this.matched.push(route)
+        return
+      }
+      
+      // 当前路由是url的一部分
+      // route='/info'  current='/about/info'
+      if (route.path !== '/' && this.current.indexOf(route.path) !== -1) {
+        this.matched.push(route)
+        if (route.children) {
+          this.match(route.children)
+        }
+        return
+      }
+    }
+  }
+}
+```
+
