@@ -207,3 +207,61 @@ class Store {
   }
 }
 ```
+
+#### 实现Getters
+
+```js
+class Store {
+  constructor(options = {}) {
+    this._wrappedGetters = options.getters
+      
+    // 定义computed选项
+    const computed = {}
+    this.getters = {}
+      
+    // forEach里面的this变了，用store代理一下
+    const store = this
+    Object.keys(this.__wrappedGetters).forEach(key => {
+      // 获取用户定义的getter
+      // getters: {
+      //   doubleCounter(state) {
+      //     return state.counter * 2
+      //   }
+      // }
+      const fn = store._wrappedGetters[key]
+      // 计算属性computed的定义是无参数的
+      // 转换为computed可以使用的无参数形式
+      // 通过高阶函数封装一下
+      computed[key] = function() {
+        return fn(store.state)
+      }
+      // 用户在外面访问getters时是只读的
+      // 为getters定义只读属性
+      Object.defineProperty(store.getters, key, {
+        // 后面每个key都会作为_vm的计算属性，可以直接通过_vm[key]访问到
+        get: () => store._vm[key]
+      })
+    })
+      
+    this._vm = new Vue({
+      data: {
+        $$state:options.state
+      },
+      computed
+    })
+  }
+  
+  // 通过存取器访问到state，store.state
+  get state() {
+    // this._vm.$data.$$state也能访问到
+    return this._vm._data.$$state
+  }
+  
+  // 这里还是无法阻止用户直接修改state的，官方实现是通过watch，监听到任何修改直接报错的
+  // 但可以改state里面的值
+  set state(v) {
+    console.error('please use replaceState to reset state')
+  }
+}
+```
+
