@@ -289,7 +289,7 @@ class Observer {
   // TODO 数组数据响应化
   /**
    * // 获取数组原型对象
-   * const arrayProto = Array.prototype
+   * const arrayProto = Array.prototype // 原型用
    * // 复制一份
    * const arrayMethods = Object.create(arrayProto)
    * const methodsToPatch = ['push','pop','shift','unshift','splice','sort','reverse']
@@ -300,6 +300,12 @@ class Observer {
    *     // 追加操作：通知更新
    *     // dep.notify()
    *   }
+   * }
+   *
+   * function observe(obj) {
+   *   // ...
+   *   // 判断是数组时，替换原型为上面修改过的
+   *   obj.__proto__ = arrayProto // 实例的原型通过__proto__修改
    * }
    */
 }
