@@ -176,22 +176,22 @@ vue.html
   <div id="app">
     <p>{{counter}}</p>
   </div>
-	<script src="./vue.js"></script>
-	<script>
-		const app = new Vue({
-			el:'#app',
-			data: {
-				counter: 1
-			},
-		})
+  <script src="./vue.js"></script>
+  <script>
+    const app = new Vue({
+      el:'#app',
+      data: {
+        counter: 1
+      },
+    })
     
-		setInterval(() => {
+    setInterval(() => {
       // app.$data.counter++
       // 通过proxy函数将$data中的key代理到vm属性中，可以直接vm.key访问$data数据
-			app.counter++
+      app.counter++
       
-		}, 1000);
-	</script>
+    }, 1000);
+  </script>
 </body>
 </html>
 ```
@@ -230,63 +230,78 @@ vue.html
 
 ```js
 function observe(obj) {
-	if (typeof obj !== 'object' || obj == null) {
-		return
-	}
+  if (typeof obj !== 'object' || obj == null) {
+    return
+  }
   
   // 创建Observer实例
-	new Observer(obj)
+  new Observer(obj)
 }
 
 // 代码同上面数据响应式原理章节推导出来的defineReactive方法
 function defineReactive(obj, key, val) {
   observe(val) // 解决嵌套对象问题
   
-	Object.defineProperty(obj, key, {
-		get() {
-			console.log(`get ${key}:${val}`)
-			return val
-		},
-		set(newVal) {
-			if (newVal !== val) {
+  Object.defineProperty(obj, key, {
+    get() {
+      console.log(`get ${key}:${val}`)
+      return val
+    },
+    set(newVal) {
+      if (newVal !== val) {
         observe(newVal) // 解决赋的值是对象的情况
-				val = newVal
-			}
-		}
-	})
+        val = newVal
+      }
+    }
+  })
 }
 
 class Vue {
-	constructor(options) {
-		this.$options = options
-		this.$data = options.data
+  constructor(options) {
+    this.$options = options
+    this.$data = options.data
     
     // 响应化处理
-		observe(this.$data)
+    observe(this.$data)
     
     // 代理 (实现代码在下面为$data做代理章节)
     proxy(this, '$data')
     
     // 创建编译器 (实现代码在下面编译-Compile章节)
     new Compiler(options.el, this)
-	}
+  }
 }
 
 // 根据对象类型决定如何做响应化
 class Observer {
-	constructor(value) {
-		this.value = value
+  constructor(value) {
+    this.value = value
     this.walk(value)
-	}
+  }
   
   // 对象数据响应化
-	walk(obj) {
-		Object.keys(obj).forEach(key => {
-			defineReactive(obj, key, obj[key])
-		})
-	}
+  walk(obj) {
+    Object.keys(obj).forEach(key => {
+      defineReactive(obj, key, obj[key])
+    })
+  }
   
   // TODO 数组数据响应化
+  /**
+   * // 获取数组原型对象
+   * const arrayProto = Array.prototype
+   * // 复制一份
+   * const arrayMethods = Object.create(arrayProto)
+   * const methodsToPatch = ['push','pop','shift','unshift','splice','sort','reverse']
+   * methodsToPatch.forEach(function (method) {
+   *   arrayMethods[method] = function() {
+   *     // 原始操作
+   *     arrayProto[method].apply(this. arguments)
+   *     // 追加操作：通知更新
+   *     // dep.notify()
+   *   }
+   * }
+   */
 }
 ```
 
@@ -294,10 +309,10 @@ class Observer {
 
 ```js
 class Vue {
-	constructor(options) {
-		// ...
-		proxy(this, '$data')
-	}
+  constructor(options) {
+    // ...
+    proxy(this, '$data')
+  }
 }
 
 // 代理函数，方便用户直接访问$data中的数据
@@ -335,44 +350,44 @@ function proxy(vm, sourceKey) {
 class Compiler {
   // el：宿主元素
   // vm：Vue实例
-	constructor(el, vm) {
-		this.$vm = vm
-		this.$el = document.querySelector(el)
-		if (this.$el) {
+  constructor(el, vm) {
+    this.$vm = vm
+    this.$el = document.querySelector(el)
+    if (this.$el) {
       // 执行编译
-			this.compile(this.$el)
-		}
-	}
+      this.compile(this.$el)
+    }
+  }
   
-	compile(el) {
+  compile(el) {
     // 遍历el树
-		const childNodes = el.childNodes
+    const childNodes = el.childNodes
     // childNodes是一个类数组，最好是from一下
-		Array.from(childNodes).forEach(node => {
+    Array.from(childNodes).forEach(node => {
       // 判断是否是元素
-			if (this.isElement(node)) {
-				// 编译元素
+      if (this.isElement(node)) {
+        // 编译元素
         this.compileElement(node) // 实现代码在下面章节
-			} else if (this.isInterpolation(node)) {
-				// 编译插值文本
+      } else if (this.isInterpolation(node)) {
+        // 编译插值文本
         this.compileText(node) // 实现代码在下面章节
-			}
+      }
       
       // 递归子节点
-			if (node.childNodes && node.childNodes.length > 0) {
-				this.compile(node)
-			}
-		});
-	}
+      if (node.childNodes && node.childNodes.length > 0) {
+        this.compile(node)
+      }
+    });
+  }
   
-	isElement(node) {
-		return node.nodeType == 1
-	}
+  isElement(node) {
+    return node.nodeType == 1
+  }
   
-	isInterpolation(node) {
+  isInterpolation(node) {
     // 首先是文本，其次内容是{{xxx}}，正则上加了分组是为了后面可以直接通过RegExp.$1拿到{{}}里的值
-		return node.nodeType == 3 && /\{\{(.*)\}\}/.test(node.textContent)
-	}
+    return node.nodeType == 3 && /\{\{(.*)\}\}/.test(node.textContent)
+  }
 }
 ```
 编译插值，compile.js
@@ -380,21 +395,21 @@ class Compiler {
 ```js
 class Compiler {
   // ...
-	compile(el) {
-		// ...
-				} else if (this.isInerpolation(node)) {
-					// console.log("编译插值文本" + node.textContent);
-					this.compileText(node)
-				}
-		});
-	}
+  compile(el) {
+    // ...
+        } else if (this.isInerpolation(node)) {
+          // console.log("编译插值文本" + node.textContent);
+          this.compileText(node)
+        }
+    });
+  }
 
-	compileText(node) {
-		// 直接通过RegExp.$1拿到{{}}里面的key，然后得到Vue.$data中这个key的值
- 	 // 没有考虑{{}}里面有其他更复杂的情况，不单单只是一个$data变量，可能还有函数、表达式等
-		node.textContent = this.$vm[RegExp.$1]
-	}
-	// ...
+  compileText(node) {
+    // 直接通过RegExp.$1拿到{{}}里面的key，然后得到Vue.$data中这个key的值
+    // 没有考虑{{}}里面有其他更复杂的情况，不单单只是一个$data变量，可能还有函数、表达式等
+    node.textContent = this.$vm[RegExp.$1]
+  }
+  // ...
 }
 ```
 
@@ -404,42 +419,42 @@ class Compiler {
 class Compiler {
   // ...
   compile(el) {
-		// ...
-		if (this.isElement(node)) {
-			// console.log("编译元素" + node.nodeName);
-			this.compileElement(node)
-		}
-  	// ...
-	}
+    // ...
+    if (this.isElement(node)) {
+      // console.log("编译元素" + node.nodeName);
+      this.compileElement(node)
+    }
+    // ...
+  }
 
-	compileElement(node) {
-	  // 节点是元素
-	  // 遍历其属性列表，处理特殊指令 v-xxx
-		let nodeAttrs = node.attributes
-		Array.from(nodeAttrs).forEach(attr => {
-	    // v-xxx="oo"
-			let attrName = attr.name // v-xxx
-			let exp = attr.value // oo
-			if (this.isDirective(attrName)) {
-				let dir = attrName.substring(2) // xxx
-  	    // 执行指令
-				this[dir] && this[dir](node, exp)
-			}
-		})
-	}
+  compileElement(node) {
+    // 节点是元素
+    // 遍历其属性列表，处理特殊指令 v-xxx
+    let nodeAttrs = node.attributes
+    Array.from(nodeAttrs).forEach(attr => {
+      // v-xxx="oo"
+      let attrName = attr.name // v-xxx
+      let exp = attr.value // oo
+      if (this.isDirective(attrName)) {
+        let dir = attrName.substring(2) // xxx
+        // 执行指令
+        this[dir] && this[dir](node, exp)
+      }
+    })
+  }
 
-	isDirective(attr) {
-		return attr.indexOf("v-") == 0
-	}
+  isDirective(attr) {
+    return attr.indexOf("v-") == 0
+  }
 
-	// v-text
-	text(node, exp) {
-		node.textContent = this.$vm[exp]
-	}
+  // v-text
+  text(node, exp) {
+    node.textContent = this.$vm[exp]
+  }
   // v-html
   html(node, exp) {
-		node.innerHTML = this.$vm[exp]
-	}
+    node.innerHTML = this.$vm[exp]
+  }
   // ...
 }
 ```
@@ -454,16 +469,16 @@ class Compiler {
 
 ```js
 new Vue({
-	template:
-		`<div>
-			<p>{{name 1 }}</p>
-			<p>{{name 2 }}</p>
-			<p>{{name 1 }}</p>
-		<div>`,
-	data: {
-		name 1 : 'name 1 ',
-		name 2 : 'name 2 '
-	}
+  template:
+    `<div>
+      <p>{{name 1 }}</p>
+      <p>{{name 2 }}</p>
+      <p>{{name 1 }}</p>
+    <div>`,
+  data: {
+    name 1 : 'name 1 ',
+    name 2 : 'name 2 '
+  }
 })
 ```
 
@@ -488,19 +503,19 @@ new Vue({
 // 监听器：负责更新视图
 // 观察者：保存更新函数，值发生变化调用更新函数
 class Watcher {
-	constructor(vm, key, updateFn) {
-		// vue实例
-		this.vm = vm
-		// 依赖key
-		this.key = key
-		// 更新函数
-		this.updateFn = updateFn
-	}
+  constructor(vm, key, updateFn) {
+    // vue实例
+    this.vm = vm
+    // 依赖key
+    this.key = key
+    // 更新函数
+    this.updateFn = updateFn
+  }
   
-	// 更新
-	update() {
-		this.updateFn.call(this.vm, this.vm[this.key])
-	}
+  // 更新
+  update() {
+    this.updateFn.call(this.vm, this.vm[this.key])
+  }
 }
 ```
 
@@ -510,59 +525,59 @@ class Watcher {
 class Compiler {
   // ...
   
-	update(node, exp, dir) {
+  update(node, exp, dir) {
     // 指令对应的更新函数
-		const fn = this[dir+'Updater']
-		fn && fn(node, this.$vm[exp])
+    const fn = this[dir+'Updater']
+    fn && fn(node, this.$vm[exp])
     
     // 每次访问到一个key就创建一个对应的watcher，供后面统一更新内容
-		new Watcher(this.$vm, exp, function(val){
-			fn && fn(node, val)
-		})
-	}
+    new Watcher(this.$vm, exp, function(val){
+      fn && fn(node, val)
+    })
+  }
   
-	textUpdater(node, val) {
-		node.textContent = val
-	}
+  textUpdater(node, val) {
+    node.textContent = val
+  }
 
-	htmlUpdater(node, val) {
-		node.innerHTML = val
-	}
+  htmlUpdater(node, val) {
+    node.innerHTML = val
+  }
   
   // 调用update函数执插值文本赋值
-	compileText(node) {
-		// console.log(RegExp.$1);
-		// node.textContent = this.$vm[RegExp.$1];
-		this.update(node, RegExp.$1, 'text')
-	}
+  compileText(node) {
+    // console.log(RegExp.$1);
+    // node.textContent = this.$vm[RegExp.$1];
+    this.update(node, RegExp.$1, 'text')
+  }
   
   // 遍历出指令后，在每个指令调用update函数
-	compileElement(node) {
-	  // 节点是元素
-	  // 遍历其属性列表，处理特殊指令 v-xxx
-		let nodeAttrs = node.attributes
-		Array.from(nodeAttrs).forEach(attr => {
-	    // v-xxx="oo"
-			let attrName = attr.name // v-xxx
-			let exp = attr.value // oo
-			if (this.isDirective(attrName)) {
-				let dir = attrName.substring(2) // xxx
-  	    // 执行指令
-				this[dir] && this[dir](node, exp)
-			}
-		})
-	}
+  compileElement(node) {
+    // 节点是元素
+    // 遍历其属性列表，处理特殊指令 v-xxx
+    let nodeAttrs = node.attributes
+    Array.from(nodeAttrs).forEach(attr => {
+      // v-xxx="oo"
+      let attrName = attr.name // v-xxx
+      let exp = attr.value // oo
+      if (this.isDirective(attrName)) {
+        let dir = attrName.substring(2) // xxx
+        // 执行指令
+        this[dir] && this[dir](node, exp)
+      }
+    })
+  }
   
-	// v-text
-	text(node, exp) {
-		// node.textContent = this.$vm[exp]
+  // v-text
+  text(node, exp) {
+    // node.textContent = this.$vm[exp]
     this.update(node, exp, 'text')
-	}
+  }
   // v-html
   html(node, exp) {
-		// node.innerHTML = this.$vm[exp]
-		this.update(node, exp, 'html')
-	}
+    // node.innerHTML = this.$vm[exp]
+    this.update(node, exp, 'html')
+  }
 }
 ```
 
@@ -571,19 +586,19 @@ class Compiler {
 ```js
 // Dep：依赖，管理某个key相关所有Watcher实例
 class Dep {
-	constructor () {
+  constructor () {
     // 保存所有依赖
-		this.deps = []
-	}
+    this.deps = []
+  }
   
-	addDep (dep) {
+  addDep (dep) {
     // push的是每一个Watcher实例
-		this.deps.push(dep)
-	}
+    this.deps.push(dep)
+  }
   
-	notify() {
-		this.deps.forEach(dep => dep.update())
-	}
+  notify() {
+    this.deps.forEach(dep => dep.update())
+  }
 }
 
 ```
@@ -592,17 +607,17 @@ class Dep {
 
 ```js
 class Watcher {
-	constructor(vm, key, updateFn) {
+  constructor(vm, key, updateFn) {
     // ...
     
     // 把当前watcher实例挂到Dep.target静态属性上
-		Dep.target = this;
+    Dep.target = this;
     // 读取一次这个key，触发getter
     // 在getter中会把这个watcher实例添加到这个key对应的Dep实例上(下一章节实现)
-		this.vm[this.key];
+    this.vm[this.key];
     // 触发getter添加实例后把target挂载去掉
-		Dep.target = null;
-	}
+    Dep.target = null;
+  }
   // ...
 }
 ```
@@ -615,39 +630,39 @@ function defineReactive(obj, key, val) {
   observe(val)
   
   // 每定义一个响应式属性就创建一个Dep，Dep和key一一对应
-	const dep = new Dep()
+  const dep = new Dep()
   
-	Object.defineProperty(obj, key, {
-		get() {
+  Object.defineProperty(obj, key, {
+    get() {
       // 收集依赖
-			Dep.target && dep.addDep(Dep.target)
-			return val
-		},
-		set(newVal) {
-			if (newVal !== val) {
+      Dep.target && dep.addDep(Dep.target)
+      return val
+    },
+    set(newVal) {
+      if (newVal !== val) {
         observe(newVal)
-				val = newVal
+        val = newVal
         // 通知这个key下的watcher更新
         dep.notify()
-			}
-		}
-	})
+      }
+    }
+  })
 }
 
 defineReactive(obj, key, val) {
-	this.observe(val);
+  this.observe(val);
   
-	const dep = new Dep()
-	Object.defineProperty(obj, key, {
-		get() {
-			
-			return val
-		},
-		set(newVal) {
-			if (newVal === val) return
-			dep.notify()
-		}
-	})
+  const dep = new Dep()
+  Object.defineProperty(obj, key, {
+    get() {
+      
+      return val
+    },
+    set(newVal) {
+      if (newVal === val) return
+      dep.notify()
+    }
+  })
 }
 ```
 
