@@ -206,7 +206,7 @@ vue.html
    Watcher
 5. 将来data中数据一旦发生变化，会首先找到对应的Dep，通知所有Watcher执行更新函数
 
-![image-20201108222022613](C:\Users\byche\AppData\Roaming\Typora\typora-user-images\image-20201108222022613.png)
+![image-20201108222022613](https://raw.githubusercontent.com/byCHENJIAJIE/image-hosting/master/typora/image-20201114143425423.png)
 
 > 解析指令：模板里面出现的非HTML的东西，比如`{{}}`数据绑定，特殊指令`v-if`、`v-model`、`@click`等
 >
@@ -344,7 +344,7 @@ function proxy(vm, sourceKey) {
 
 编译模板中vue模板特殊语法，初始化视图、更新视图
 
-![image-20201114143425423](C:\Users\byche\AppData\Roaming\Typora\typora-user-images\image-20201114143425423.png)
+![image-20201114143425423](https://raw.githubusercontent.com/byCHENJIAJIE/image-hosting/master/typora/image-20201114155119175.png)
 
 递归遍历DOM树 => 判断节点类型，如果是文字则判断是否插值绑定，如果是元素则遍历其属性判断是否指令或事件，然后递归子元素
 
@@ -490,7 +490,7 @@ new Vue({
 
 
 
-![image-20201114155119175](C:\Users\byche\AppData\Roaming\Typora\typora-user-images\image-20201114155119175.png)
+![image-20201114155119175](https://raw.githubusercontent.com/byCHENJIAJIE/image-hosting/master/typora/image-20201108222022613.png)
 
 每个属性和Dep是一对一关系，Dep和Watcher是一对多关系，Dep和Watcher是典型的观察者模式，Dep是被观察者（key和Dep是一对一，key变化会通知Dep，实际被观察的是key），Watcher是观察者
 
@@ -501,7 +501,7 @@ new Vue({
 3. 由于触发name1的getter方法，便将watcher1添加到name1对应的Dep中
 4. 当name1更新，setter触发时，便可通过对应Dep通知其管理所有Watcher更新
 
-![image-20201108222022613](C:\Users\byche\AppData\Roaming\Typora\typora-user-images\image-20201108222022613.png)
+![image-20201108222022613](https://raw.githubusercontent.com/byCHENJIAJIE/image-hosting/master/typora/image-20201114143425423.png)
 
 创建Watcher，vue.js
 
@@ -674,7 +674,7 @@ defineReactive(obj, key, val) {
 
 ##### 总结
 
-![image-20201108222022613](C:\Users\byche\AppData\Roaming\Typora\typora-user-images\image-20201108222022613.png)
+![image-20201108222022613](https://raw.githubusercontent.com/byCHENJIAJIE/image-hosting/master/typora/image-20201114143425423.png)
 
 当创建构造函数new MVVM()时只做两件事，创建Observer实例以及创建Compiler实例
 

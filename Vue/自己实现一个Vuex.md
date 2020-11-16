@@ -6,7 +6,7 @@ Vuex **集中式** 存储管理应用的所有组件的状态，并以相应的�
 
 可预测：所有使用数据的人都不知道数据哪来的，修改数据也不能直接改，需要使用别人提供的修改方法
 
-![vuex单向数据](https://vuex.vuejs.org/vuex.png)
+![vuex单向数据](https://raw.githubusercontent.com/byCHENJIAJIE/image-hosting/master/typora/vuex.png)
 
 场景：
 
